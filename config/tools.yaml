@@ -1,0 +1,35 @@
+# Database MCP Server Configuration
+# This file defines the database sources for the FastMCP-based database server
+
+# Database Sources
+sources:
+  # PostgreSQL source
+  postgres-main:
+    kind: postgres
+    host: localhost
+    port: 5432
+    database: toolbox_db
+    user: toolbox_user
+    password: toolbox_password
+    sslmode: prefer
+  
+  # MySQL source
+  mysql-main:
+    kind: mysql
+    host: localhost
+    port: 3306
+    database: toolbox_db
+    user: toolbox_user
+    password: toolbox_password
+  
+  # Oracle source
+  oracle-main:
+    kind: oracle
+    host: localhost
+    port: 1521
+    database: XE
+    user: system
+    password: oracle_password
+    service_name: XE
+    # Alternative: use SID instead of service_name
+    # sid: XE
