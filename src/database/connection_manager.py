@@ -121,11 +121,8 @@ class EnhancedConnectionManager:
             return {"error": f"Connection {connection_id} not found or inactive"}
         
         try:
-            # Create database engine to use its execute_query method
-            db_engine = self.engine_factory.create_engine(connection.source.kind, connection.source)
-            db_engine.engine = connection.engine  # Use existing engine
-            
-            result = db_engine.execute_query(sql, params)
+            # Use the existing engine directly
+            result = connection.engine.execute_query(sql, params)
             return result
             
         except Exception as e:
@@ -139,11 +136,8 @@ class EnhancedConnectionManager:
             return {"error": f"Connection {connection_id} not found or inactive"}
         
         try:
-            # Create database engine to use its list_tables method
-            db_engine = self.engine_factory.create_engine(connection.source.kind, connection.source)
-            db_engine.engine = connection.engine  # Use existing engine
-            
-            result = db_engine.list_tables()
+            # Use the existing engine directly
+            result = connection.engine.list_tables()
             return result
             
         except Exception as e:
@@ -157,11 +151,8 @@ class EnhancedConnectionManager:
             return {"error": f"Connection {connection_id} not found or inactive"}
         
         try:
-            # Create database engine to use its get_database_info method
-            db_engine = self.engine_factory.create_engine(connection.source.kind, connection.source)
-            db_engine.engine = connection.engine  # Use existing engine
-            
-            result = db_engine.get_database_info()
+            # Use the existing engine directly
+            result = connection.engine.get_database_info()
             return result
             
         except Exception as e:
