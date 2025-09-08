@@ -159,6 +159,21 @@ class EnhancedConnectionManager:
             logger.error(f"Error getting database info for connection {connection_id}: {e}")
             return {"error": str(e)}
     
+    def explain_plan(self, connection_id: str, sql: str) -> Dict[str, Any]:
+        """Get execution plan for a SQL query on a specific connection."""
+        connection = self.get_connection(connection_id)
+        if not connection:
+            return {"error": f"Connection {connection_id} not found or inactive"}
+        
+        try:
+            # Use the existing engine directly
+            result = connection.engine.explain_plan(sql)
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error getting execution plan for connection {connection_id}: {e}")
+            return {"error": str(e)}
+    
     def cleanup_inactive_connections(self, max_age_hours: int = 24):
         """Clean up connections that haven't been used for a specified time."""
         from datetime import timedelta

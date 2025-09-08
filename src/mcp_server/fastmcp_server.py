@@ -137,65 +137,23 @@ class DatabaseMCPServer:
                 })
         
         @self.mcp.tool()
-        def optimize_sql(sql: str, database_type: str = "postgres") -> str:
+        def explain_plan(connection_id: str, sql: str) -> str:
             """
-            Optimize a SQL query for better performance.
+            Get execution plan for a SQL query on a database connection.
             
             Args:
-                sql: SQL query to optimize
-                database_type: Type of database (postgres, mysql, oracle)
+                connection_id: ID of the database connection
+                sql: SQL query to analyze
                 
             Returns:
-                Optimized SQL query and suggestions
+                Execution plan details in JSON format
             """
             try:
-                # Basic SQL optimization suggestions
-                suggestions = []
-                optimized_sql = sql.strip()
-                
-                # Convert to lowercase for analysis
-                sql_lower = optimized_sql.lower()
-                
-                # Check for common optimization opportunities
-                if "select *" in sql_lower:
-                    suggestions.append("Consider specifying column names instead of using SELECT *")
-                
-                if "order by" in sql_lower and "limit" not in sql_lower:
-                    suggestions.append("Consider adding LIMIT clause when using ORDER BY")
-                
-                if "where" not in sql_lower and "join" not in sql_lower:
-                    suggestions.append("Consider adding WHERE clause to filter results")
-                
-                # Database-specific optimizations
-                if database_type.lower() == "postgres":
-                    if "ilike" in sql_lower:
-                        suggestions.append("Consider using LIKE with proper indexing instead of ILIKE for better performance")
-                    if "distinct" in sql_lower:
-                        suggestions.append("Consider if DISTINCT is necessary - it can be expensive")
-                
-                elif database_type.lower() == "mysql":
-                    if "limit" not in sql_lower and "order by" in sql_lower:
-                        suggestions.append("MySQL benefits from LIMIT clauses with ORDER BY")
-                    if "group by" in sql_lower:
-                        suggestions.append("Ensure GROUP BY columns are indexed")
-                
-                elif database_type.lower() == "oracle":
-                    if "rownum" in sql_lower:
-                        suggestions.append("Consider using ROW_NUMBER() window function instead of ROWNUM")
-                    if "nvl" in sql_lower:
-                        suggestions.append("Consider using COALESCE instead of NVL for better portability")
-                
-                return json.dumps({
-                    "success": True,
-                    "original_sql": sql,
-                    "optimized_sql": optimized_sql,
-                    "database_type": database_type,
-                    "suggestions": suggestions,
-                    "optimization_score": max(0, 100 - len(suggestions) * 20)
-                }, indent=2)
+                result = connection_manager.explain_plan(connection_id, sql)
+                return json.dumps(result, indent=2)
                 
             except Exception as e:
-                logger.error(f"Error optimizing SQL: {e}")
+                logger.error(f"Error getting execution plan: {e}")
                 return json.dumps({
                     "success": False,
                     "error": str(e)

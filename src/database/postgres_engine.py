@@ -119,3 +119,27 @@ class PostgreSQLEngine(DatabaseEngine):
                 
         except Exception as e:
             return {"error": str(e)}
+    
+    def explain_plan(self, sql: str) -> Dict[str, Any]:
+        """Get PostgreSQL execution plan using EXPLAIN."""
+        try:
+            engine = self.get_engine()
+            if not engine:
+                return {"error": "Database engine not available"}
+            
+            with engine.connect() as connection:
+                # Use EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) for detailed plan
+                explain_sql = f"EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) {sql}"
+                result = connection.execute(text(explain_sql))
+                plan_data = result.fetchone()[0]
+                
+                return {
+                    "success": True,
+                    "database_type": "postgres",
+                    "sql": sql,
+                    "execution_plan": plan_data,
+                    "plan_type": "EXPLAIN ANALYZE"
+                }
+                
+        except Exception as e:
+            return {"error": str(e)}

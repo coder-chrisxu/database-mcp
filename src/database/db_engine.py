@@ -170,6 +170,13 @@ class DatabaseEngine(ABC):
             except Exception as e:
                 logger.error(f"Error closing {self.db_type} engine: {e}")
     
+    def explain_plan(self, sql: str) -> Dict[str, Any]:
+        """
+        Get execution plan for a SQL query.
+        This is an abstract method that should be implemented by subclasses.
+        """
+        raise NotImplementedError(f"explain_plan not implemented for {self.db_type}")
+    
     def __enter__(self):
         """Context manager entry."""
         return self

@@ -143,3 +143,27 @@ class MySQLEngine(DatabaseEngine):
                 
         except Exception as e:
             return {"error": str(e)}
+    
+    def explain_plan(self, sql: str) -> Dict[str, Any]:
+        """Get MySQL execution plan using EXPLAIN."""
+        try:
+            engine = self.get_engine()
+            if not engine:
+                return {"error": "Database engine not available"}
+            
+            with engine.connect() as connection:
+                # Use EXPLAIN FORMAT=JSON for detailed plan
+                explain_sql = f"EXPLAIN FORMAT=JSON {sql}"
+                result = connection.execute(text(explain_sql))
+                plan_data = result.fetchone()[0]
+                
+                return {
+                    "success": True,
+                    "database_type": "mysql",
+                    "sql": sql,
+                    "execution_plan": plan_data,
+                    "plan_type": "EXPLAIN FORMAT=JSON"
+                }
+                
+        except Exception as e:
+            return {"error": str(e)}

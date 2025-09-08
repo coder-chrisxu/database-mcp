@@ -162,3 +162,76 @@ class OracleEngine(DatabaseEngine):
                 
         except Exception as e:
             return {"error": str(e)}
+    
+    def explain_plan(self, sql: str) -> Dict[str, Any]:
+        """Get Oracle execution plan using the same approach as Oracle SQL Developer."""
+        try:
+            engine = self.get_engine()
+            if not engine:
+                return {"error": "Database engine not available"}
+            
+            with engine.connect() as connection:
+                # Oracle SQL Developer approach: Use GATHER_PLAN_STATISTICS hint
+                # This is the standard way Oracle SQL Developer gets execution plans
+                
+                # Add the GATHER_PLAN_STATISTICS hint to the SQL
+                # This tells Oracle to collect detailed execution statistics
+                sql_with_hint = f"SELECT /*+ GATHER_PLAN_STATISTICS */ * FROM ({sql})"
+                
+                try:
+                    # Execute the query with statistics collection
+                    connection.execute(text(sql_with_hint))
+                    
+                    # Get the execution plan with actual statistics using DBMS_XPLAN.DISPLAY_CURSOR
+                    # This is exactly what Oracle SQL Developer does
+                    plan_query = """
+                        SELECT plan_table_output 
+                        FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'ALLSTATS LAST'))
+                    """
+                    
+                    result = connection.execute(text(plan_query))
+                    plan_output = [row[0] for row in result.fetchall()]
+                    
+                    return {
+                        "success": True,
+                        "database_type": "oracle",
+                        "sql": sql,
+                        "execution_plan": plan_output,
+                        "plan_type": "Oracle SQL Developer Style (GATHER_PLAN_STATISTICS + DBMS_XPLAN.DISPLAY_CURSOR)",
+                        "note": "This shows actual execution statistics including rows processed, time, and cost."
+                    }
+                    
+                except Exception as e:
+                    # If the query execution fails, try a simpler approach
+                    # This handles cases where the query might not be executable (e.g., DDL statements)
+                    try:
+                        # For non-executable queries, use EXPLAIN PLAN with DBMS_XPLAN.DISPLAY
+                        explain_sql = f"EXPLAIN PLAN FOR {sql}"
+                        connection.execute(text(explain_sql))
+                        connection.commit()
+                        
+                        # Get the plan using DBMS_XPLAN.DISPLAY (this is also used by SQL Developer)
+                        plan_query = """
+                            SELECT plan_table_output 
+                            FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, NULL, 'BASIC'))
+                        """
+                        
+                        result = connection.execute(text(plan_query))
+                        plan_output = [row[0] for row in result.fetchall()]
+                        
+                        return {
+                            "success": True,
+                            "database_type": "oracle",
+                            "sql": sql,
+                            "execution_plan": plan_output,
+                            "plan_type": "Oracle SQL Developer Style (EXPLAIN PLAN + DBMS_XPLAN.DISPLAY)",
+                            "note": "This shows estimated execution plan. For actual statistics, the query must be executable."
+                        }
+                        
+                    except Exception as explain_error:
+                        return {
+                            "error": f"Unable to get execution plan: {str(explain_error)}"
+                        }
+                
+        except Exception as e:
+            return {"error": str(e)}
